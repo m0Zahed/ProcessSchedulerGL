@@ -8,24 +8,10 @@
 #include <math.h>
 #include "shader.h"
 #include "shapes.h"
+#include "stb_image.h"
 
-const char* fragmentShaderString = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-" FragColor = vec4(ourColor,1.0);\n"
-"}\0";
-const char* vertexShaderString = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"layout (location = 1) in vec3 aColor;\n"
-"out vec3 ourColor;\n"
-"void main()\n"
-    "{\n"
-        "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "ourColor = aColor;\n"
-    "}\0";
 
+#define CHANNEL_TYPE(CHNL) CHNL
 
 //to compile - g++ test.cpp glad.c -o test -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl
 
@@ -41,59 +27,51 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
 }
 
+static int textureCount = 0;
+unsigned int initTexture(unsigned int& texture, const char* fileName)
+{
+    // -- Initalizing Texture --
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    textureCount++;
+
+    // set the texture wrapping/filtering options (on currently bound texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data = stbi_load(fileName, &width, &height, &nrChannels, 0);
+    
+    if (data)
+    {
+        std::cout << "Successfully loaded texture" << std::endl;
+        // specifiy that the image data is RGBA
+        unsigned int CHANNEL = GL_RGB;
+        if(nrChannels > 3)
+        {
+            CHANNEL = GL_RGBA;
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,CHANNEL , GL_UNSIGNED_BYTE, data);
+        #undef CHANNEL
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    return texture;
+}
+
 unsigned int VBO;
 unsigned int VAO;
 unsigned int EBO;
-unsigned int shaderProgram;
-void CreateShaderProgram()
-{
 
-
-    shaderProgram = glCreateProgram();
-    // Vertex Shader and fragment shader Instantiation -- 
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    // -- GLSL source code --
-    glShaderSource(fragmentShader, 1, &fragmentShaderString, NULL);
-    glCompileShader(fragmentShader);
-    //shaderCompileResult(fragmentShader);
-    glShaderSource(vertexShader, 1, &vertexShaderString, NULL);
-    glCompileShader(vertexShader);
-    //shaderCompileResult(vertexShader);
-
-    //Attaching and linking the programs
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    //Checking of the GLSL Shader source code compiled properly
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
-        infoLog << std::endl;
-    }
-
-    glValidateProgram(shaderProgram);
-	glGetProgramiv(shaderProgram, GL_VALIDATE_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, sizeof(infoLog), NULL, infoLog);
-		printf("Error validating program: '%s'\n", infoLog);
-	}
-   
-    //Next delete the shader item  objects since we do not need them anymore
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return;
-}
 
 int main(int argc, char *argv[])
 {
@@ -117,22 +95,24 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    //registering the callback function in the OpenGL context
+    // Frame size adjuster calllback function
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    //initalizing glsl code
-    //Shader s1(argv[1],argv[2]);
-    CreateShaderProgram();
 
-     //Initializing Shapes
+
+    // --- Shapes Data ----
+    float Vertices[] = {
+    // positions                              //color                         //texture      
+    0.5f, 0.5f, 0.0f,        1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+    0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    -0.5f, 0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, 1.0f
+    };
     float triangleVertices[] = {
         0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // top right
         0.0f, 0.25f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom right
         -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom left
        
     };
-    Shapes Tri(triangleVertices, sizeof(triangleVertices));
-    
     float rectVertices[] = {
         0.5f, 0.5f, 0.0f, // top right
         0.5f, -0.5f, 0.0f, // bottom right
@@ -143,50 +123,61 @@ int main(int argc, char *argv[])
         0,1,3,
         1,2,3
     };
-    Shapes Rect(rectVertices,indices,sizeof(rectVertices),sizeof(indices));
-    
-    //initialize the required shaped
-    Tri.initTriangle();
-    
 
-    //render loop
+
+    // -- Shader Object --
+    Shader s1(argv[1],argv[2]);
+
+    // --Shapes Object --
+    Shapes Tri(Vertices, sizeof(Vertices));
+    Shapes Rect(Vertices,indices,sizeof(Vertices),sizeof(indices));
+    Rect.initTextureRectangle();
+
+
+    // -- Initialize Textures --
+    unsigned int text1 = initTexture(text1, "awesomeface.png");
+    unsigned int text2 = initTexture(text2, "container.jpg");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, text2);
+    s1.use();
+    s1.setInt("texture1", 0);
+    s1.setInt("texture2", 1);
+
+    // --- Render Loop ---
     while(!glfwWindowShouldClose(window))
     {   
-
+        
         processInput(window);
         
-        //Clearing the color once
-        glClearColor(0.75f,0.3f,0.8f,1.0f);
+        glClearColor(0.07f,0.23f,0.8f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // -- rendering commands --  
         
-        // -- rendering commands --
-         //use shader program to render object
-        glUseProgram(shaderProgram);
-            // -- Code when the fragment shader has a uniform --
-            // float timeValue = glfwGetTime();
-            // float greenValue = (sin(timeValue)/2.0f)+0.5f;
-            // int vertexColorLocation = glGetUniformLocation(shaderProgram,"ourColor");
-            // glUniform4f(vertexColorLocation,0.0f,greenValue,0.0,1.0f);
-            glBindVertexArray(VAO);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-                //glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
-            glBindVertexArray(0);
-        glUseProgram(0);
-        //polss events such as keyboard keys and mouse movements and raises flags 
-        glfwPollEvents();
-        //continously swapbuffer
-        glfwSwapBuffers(window);
+        glBindVertexArray(VAO);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            //glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        glBindVertexArray(0);
 
         
+        glfwPollEvents();
+        glfwSwapBuffers(window);
         
     }
     
-    //unbind vao and vbo array
+    //unbind vao and vbo array and texture
+    glUseProgram(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	
+	glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1,&text1);
+    glDeleteBuffers(1,&text2);
+    
     glfwTerminate();
     return 0;
 }   

@@ -9,18 +9,13 @@ void Shader::use()
 
 Shader::Shader(const std::string arg1, const std::string arg2)
 {
+    //arg1, arg2 -> Shader Source Code 
     parser(arg1);
     parser(arg2);
-
-    
-    
-    shaderProgram = glCreateProgram();
     // Vertex Shader and fragment shader Instantiation -- 
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
+    shaderProgram = glCreateProgram();
     // -- GLSL source code --
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
@@ -28,8 +23,7 @@ Shader::Shader(const std::string arg1, const std::string arg2)
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
     shaderCompileResult(vertexShader);
-
-    //Attaching and linking the programs
+    //Attaching and linking the program
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
@@ -44,7 +38,6 @@ Shader::Shader(const std::string arg1, const std::string arg2)
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
         infoLog << std::endl;
     }
-
     glValidateProgram(shaderProgram);
 	glGetProgramiv(shaderProgram, GL_VALIDATE_STATUS, &success);
 	if (!success)
@@ -95,15 +88,15 @@ void Shader::parser(const std::string& location)
     
     input.close();
 
-    if( location == "vertexShader.txt")
+    if( location == "vertexShader.glsl")
     {
-        vertexShader = program;//copy data into seperate buffer because the file stream data only exits while the file is open and gets deleted when the file closes so that char* pointer points to nothing
-        vertexShaderSource = &vertexShader[0];
+        vertexShader_ = program; //copy data into seperate buffer because the file stream data only exits while the file is open and gets deleted when the file closes so that char* pointer points to nothing
+        vertexShaderSource = &vertexShader_[0];
     }
     else 
     {
-        fragmentShader  = program;
-        fragmentShaderSource = &fragmentShader[0];
+        fragmentShader_  = program;
+        fragmentShaderSource = &fragmentShader_[0];
     }
 }
 

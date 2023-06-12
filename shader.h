@@ -11,7 +11,8 @@ class Shader
     public:
         const char* vertexShaderSource;
         const char* fragmentShaderSource;
-        std::string fragmentShader,vertexShader;
+        unsigned int fragmentShader,vertexShader;
+        std::string fragmentShader_,vertexShader_;
         unsigned int shaderProgram;
 
         Shader(const std::string arg1, const std::string arg2);

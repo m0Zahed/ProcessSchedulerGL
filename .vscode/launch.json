@@ -11,7 +11,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/test",
-        "args": ["vertexShader.txt", "fragmentShader.txt"],
+        "args": ["vertexShader.glsl", "fragmentShader.glsl"],
         "stopAtEntry": false,
         "cwd": "${fileDirname}",
         "environment": [],

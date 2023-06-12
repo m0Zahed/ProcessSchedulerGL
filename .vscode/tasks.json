@@ -26,7 +26,7 @@
         {
             "type": "shell",
             "label": "Compile",
-            "command" : "g++ boilerplate.cpp shapes.cpp shader.cpp glad.c -o test -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl "
+            "command" : "g++ -g boilerplate.cpp shapes.cpp stb_image.cpp shader.cpp glad.c -o test -lGL -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl"
             
         }
     ],

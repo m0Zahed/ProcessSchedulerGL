@@ -19,7 +19,9 @@ class Shapes
     Shapes(float* data, int dataSize);
     Shapes(float* data, int* indices, int dataSizeData, int dataSizeIndex);
     void initTriangle();
+    void initTextureTriangle();
     void initRectangle();
+    void initTextureRectangle();
 };
 
 #endif /* C721A9BD_735C_4777_A53E_099E323BA9DB */
